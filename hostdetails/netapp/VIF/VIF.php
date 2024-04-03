@@ -1,0 +1,125 @@
+<?php
+include($_SERVER['DOCUMENT_ROOT'] . '/synthesis/session.php');
+$hostid = $_GET["hostid"];
+
+function formatBytes($bytes, $precision = 2)
+{
+  $units = array('B', 'KB', 'MB', 'GB', 'TB');
+
+  $bytes = max($bytes, 0);
+  $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
+  $pow = min($pow, count($units) - 1);
+
+  // Uncomment one of the following alternatives
+  $bytes /= pow(1024, $pow);
+  // $bytes /= (1 << (10 * $pow)); 
+
+  return round($bytes, $precision) . ' ' . $units[$pow];
+}
+?>
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+</head>
+
+<body>
+	<div class="row">
+		<div class="col-md-12">
+			<!-- CPU Util table -->
+			<table id="viftable" class="table table-bordered table-striped">
+				<caption><i>Updated since: <?php echo date("d/m/y h:i A", time()); ?></i></caption>
+				<thead>
+					<tr>
+						<th>VIF Name</th>
+						<th>Is Home</th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php
+
+						$params = array(
+							"output" => array("name"),
+							"hostids" => $hostid
+						);
+						//call api
+						$result = $zbx->call('host.get', $params);
+						foreach ($result as $row) {
+							$gethostname = $row["name"];
+						}
+
+						// Get Nodes Name
+                        $vif_name = [];
+						$params = array(
+							"output" => array("itemid", "name", "lastvalue", "key_", "lastclock", "delay", "error"),
+							"hostids" => $hostid,
+							"search" => array("name" => array("is Home")),
+							"searchByAny" => true
+						);
+						//call api problem.get only to get eventid
+						$result = $zbx->call('item.get',$params);
+						foreach ($result as $item) {
+                            if ($item["error"] == "") {
+                                $item_name = substr($item["name"], 4);
+                                $vif_name[] = substr($item_name, 0, -9);
+                            }
+						}
+
+                        // Loop through all nodes
+                        for ($i=0; $i < count($vif_name); $i++) { 
+                            
+                            // Aggregate
+                            $params = array(
+                                "output" => array("itemid", "name", "lastvalue", "key_", "lastclock", "delay", "error"),
+                                "hostids" => $hostid,
+                                "search" => array("name" => array("VIF[".$vif_name[$i]."] is Home")),
+                                "searchByAny" => true
+                            );
+                            //call api problem.get only to get eventid
+                            $result = $zbx->call('item.get',$params);
+                            if (!empty($result)) {
+                                foreach ($result as $item) {
+                                    $vifishome_value = $item["lastvalue"];
+                                }
+                            }
+                            else {
+                                $vifishome_value = "No data";
+                            }
+
+                            // Mapping
+                            // Volume Type
+                            if ($vifishome_value == 1) {
+                                $vifishome_value = '<button class="btn btn-block btn-success">True</button>';
+                            }
+                            else if ($vifishome_value <> 1) {
+                                $vifishome_value = '<button class="btn btn-block btn-danger">False</button>';
+                            }
+
+                            print "<tr>";
+                            print "<td>".$vif_name[$i]."</td>";
+                            print "<td>".$vifishome_value."</td>";
+                            print "</tr>";
+                        }
+					?>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</body>
+
+</html>
+
+<script>
+	$(function() {
+		$('#viftable').DataTable({
+			// "order": [
+			// 	[4, "desc"]
+			// ],
+			"scrollY": "400px",
+			scrollCollapse: true,
+			"paging": true
+		});
+	});
+</script>

@@ -1,0 +1,44 @@
+[
+    {
+        "reportid": "1",
+        "name": "Linux Servers Reporting",
+        "hostids": [],
+        "usrgrpids": [
+            "22"
+        ],
+        "userids": [],
+        "url": "http:\/\/localhost\/synthesis\/reporting_linux.php?groupid=2",
+        "schedule": "2",
+        "period": "2",
+        "report_start": "15\/10\/2023 12:00:17 AM",
+        "report_end": "22\/10\/2023 12:00:17 AM",
+        "report_generateon": "Sun, 22 Oct 23 00:00:52 +0800"
+    },
+    {
+        "reportid": "2",
+        "name": "Synthesis Server",
+        "hostids": [],
+        "usrgrpids": [
+            "22"
+        ],
+        "userids": [],
+        "url": "http:\/\/localhost\/synthesis\/reporting_linux.php?groupid=104",
+        "schedule": "2",
+        "period": "2",
+        "report_start": "15\/10\/2023 12:03:17 AM",
+        "report_end": "22\/10\/2023 12:03:17 AM",
+        "report_generateon": "Sun, 22 Oct 23 00:03:51 +0800"
+    },
+    {
+        "reportid": "3",
+        "name": "Windows Server",
+        "hostids": [],
+        "usrgrpids": [
+            "22"
+        ],
+        "userids": [],
+        "url": "http:\/\/localhost\/synthesis\/reporting_windows.php?groupid=26",
+        "schedule": "2",
+        "period": "2"
+    }
+]

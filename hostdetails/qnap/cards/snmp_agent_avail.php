@@ -1,0 +1,88 @@
+<?php
+include($_SERVER['DOCUMENT_ROOT'] . '/synthesis/session.php');
+//get hostid
+$hostid = $_GET['hostid'];
+
+//get hostname
+$params = array(
+	"output" => array("name"),
+	"hostids" => $hostid,
+	"selectInterfaces"
+	);
+//call api method
+$result = $zbx->call('host.get',$params);
+foreach ($result as $host) {
+	$hostname = $host["name"];
+}
+
+//for seconds to time
+function secondsToTime($seconds) {
+    $dtF = new \DateTime('@0');
+    $dtT = new \DateTime("@$seconds");
+    return $dtF->diff($dtT)->format('%a days, %h hours, %i minutes and %s seconds');
+}
+
+//format value to bytes
+function formatBytes($bytes, $precision = 2) { 
+	$units = array('B', 'KB', 'MB', 'GB', 'TB'); 
+
+	$bytes = max($bytes, 0); 
+	$pow = floor(($bytes ? log($bytes) : 0) / log(1024)); 
+	$pow = min($pow, count($units) - 1); 
+
+	// Uncomment one of the following alternatives
+	$bytes /= pow(1024, $pow);
+	// $bytes /= (1 << (10 * $pow)); 
+
+	return round($bytes, $precision) . ' ' . $units[$pow]; 
+} 
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title></title>
+</head>
+<body>
+	<?php
+		$params = array(
+			"output" => array("lastvalue"),
+			"hostids" => $hostid,
+			"search" => array("name" => "SNMP agent availability")
+			);
+		//call api method
+		$result = $zbx->call('item.get',$params);
+		foreach ($result as $item) {
+
+			$value = $item["lastvalue"];
+		}
+
+		if ($value == 0) {
+			$text = "Not Available";
+		}else if($value == 1){
+			$text = "Available";
+		}else if($value == 2){
+			$text = "Unknown";
+		}else{
+			$text = "Unclassified";
+		}
+
+		echo $text;
+	?>
+
+	<script>
+		var value = "<?php echo $value ?>";
+
+		if ($value == 0) {
+			$("#snmp_agent_avail_div").attr("class", "small-box bg-red");
+		}else if($value == 1){
+			$("#snmp_agent_avail_div").attr("class", "small-box bg-green");
+		}else if($value == 2){
+			$("#snmp_agent_avail_div").attr("class", "small-box bg-gray");
+		}else{
+			$("#snmp_agent_avail_div").attr("class", "small-box bg-gray");
+		}
+
+	</script>
+</body>
+</html>

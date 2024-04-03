@@ -1,0 +1,2804 @@
+<?php
+  include "ZabbixApi.php";
+  include 'session.php';
+
+  $hostid = $_GET['hostid'] ?? "10084";
+
+  if (isset($_POST['submit']))
+  {
+  // Execute this code if the submit button is pressed.
+  $timefrom1 = $_POST['timefrom'];
+  $timefrom = strtotime($timefrom1);
+  $timetill1 = $_POST['timetill'];
+  $timetill = strtotime($timetill1);
+  }
+  else {
+  $timefrom = $_GET['timefrom'] ?? strtotime('today');
+  $timetill = $_GET['timetill'] ?? time();
+  }
+  //display time format
+  $diff = $timetill - $timefrom;
+  if ($diff == 3600) {
+    $status = "Last 1 hour";
+  }
+  else if ($diff < 86400) {
+    $status = "Today";
+  }
+  else if ($diff == 86400) {
+    $status = "Last 1 day";
+  }
+  else if ($diff == 172800) {
+    $status = "Last 2 days";
+  }
+  else if ($diff == 604800) {
+    $status = "Last 7 days";
+  }
+  else if ($diff == 2592000) {
+    $status = "Last 30 days";
+  }
+?>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Host Details</title>
+    <!--<meta http-equiv="refresh" content="60">-->
+    <meta content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no' name='viewport'>
+    <!-- Bootstrap 3.3.2 -->
+    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <!-- Font Awesome Icons -->
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <!-- Ionicons -->
+    <link href="http://code.ionicframework.com/ionicons/2.0.0/css/ionicons.min.css" rel="stylesheet" type="text/css" />
+    <!-- daterange picker -->
+    <link href="plugins/daterangepicker/daterangepicker-bs3.css" rel="stylesheet" type="text/css" />
+    <!-- iCheck for checkboxes and radio inputs -->
+    <link href="plugins/iCheck/all.css" rel="stylesheet" type="text/css" />
+    <!-- Bootstrap Color Picker -->
+    <link href="plugins/colorpicker/bootstrap-colorpicker.min.css" rel="stylesheet"/>
+    <!-- Bootstrap time Picker -->
+    <link href="plugins/timepicker/bootstrap-timepicker.min.css" rel="stylesheet"/>
+    <!-- Morris charts -->
+    <link href="plugins/morris/morris.css" rel="stylesheet" type="text/css" />
+    <!-- Theme style -->
+    <link href="dist/css/AdminLTE.min.css" rel="stylesheet" type="text/css" />
+    <!-- AdminLTE Skins. Choose a skin from the css/skins 
+         folder instead of downloading all of them to reduce the load. -->
+    <link href="dist/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
+
+     <!-- external libs from cdnjs -->
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+
+      <!-- PivotTable.js libs from ../dist -->
+      <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+      <link rel="stylesheet" type="text/css" href="dist/pivot.css">
+      <script type="text/javascript" src="dist/pivot.js"></script>
+      <script type="text/javascript" src="dist/gchart_renderers.js"></script>
+      <script type="text/javascript" src="js/table2csv.js"></script>
+
+      <!-- optional: mobile support with jqueryui-touch-punch -->
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.3/jquery.ui.touch-punch.min.js"></script>
+
+        <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
+    <!-- Resources AM4CORE -->
+    <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/4/themes/dark.js"></script>
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+    
+  </head>
+  
+  <body class="skin-blue">
+    <div class="wrapper">
+      
+      <header class="main-header">
+        <!-- Logo -->
+        <a href="index2.html" class="logo"><b>Admin</b>LTE</a>
+        <!-- Header Navbar: style can be found in header.less -->
+        <nav class="navbar navbar-static-top" role="navigation">
+          <!-- Sidebar toggle button-->
+          <a href="#" class="sidebar-toggle" data-toggle="offcanvas" role="button">
+            <span class="sr-only">Toggle navigation</span>
+          </a>
+          <div class="navbar-custom-menu">
+            <ul class="nav navbar-nav">
+              <!-- Messages: style can be found in dropdown.less-->
+              <li class="dropdown messages-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <i class="fa fa-envelope-o"></i>
+                  <span class="label label-success">4</span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">You have 4 messages</li>
+                  <li>
+                    <!-- inner menu: contains the actual data -->
+                    <ul class="menu">
+                      <li><!-- start message -->
+                        <a href="#">
+                          <div class="pull-left">
+                            <img src="dist/img/user2-160x160.jpg" class="img-circle" alt="User Image"/>
+                          </div>
+                          <h4>
+                            Support Team
+                            <small><i class="fa fa-clock-o"></i> 5 mins</small>
+                          </h4>
+                          <p>Why not buy a new awesome theme?</p>
+                        </a>
+                      </li><!-- end message -->
+                      <li>
+                        <a href="#">
+                          <div class="pull-left">
+                            <img src="dist/img/user3-128x128.jpg" class="img-circle" alt="user image"/>
+                          </div>
+                          <h4>
+                            AdminLTE Design Team
+                            <small><i class="fa fa-clock-o"></i> 2 hours</small>
+                          </h4>
+                          <p>Why not buy a new awesome theme?</p>
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <div class="pull-left">
+                            <img src="dist/img/user4-128x128.jpg" class="img-circle" alt="user image"/>
+                          </div>
+                          <h4>
+                            Developers
+                            <small><i class="fa fa-clock-o"></i> Today</small>
+                          </h4>
+                          <p>Why not buy a new awesome theme?</p>
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <div class="pull-left">
+                            <img src="dist/img/user3-128x128.jpg" class="img-circle" alt="user image"/>
+                          </div>
+                          <h4>
+                            Sales Department
+                            <small><i class="fa fa-clock-o"></i> Yesterday</small>
+                          </h4>
+                          <p>Why not buy a new awesome theme?</p>
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <div class="pull-left">
+                            <img src="dist/img/user4-128x128.jpg" class="img-circle" alt="user image"/>
+                          </div>
+                          <h4>
+                            Reviewers
+                            <small><i class="fa fa-clock-o"></i> 2 days</small>
+                          </h4>
+                          <p>Why not buy a new awesome theme?</p>
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li class="footer"><a href="#">See All Messages</a></li>
+                </ul>
+              </li>
+              <!-- Notifications: style can be found in dropdown.less -->
+              <li class="dropdown notifications-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <i class="fa fa-bell-o"></i>
+                  <span class="label label-warning">10</span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">You have 10 notifications</li>
+                  <li>
+                    <!-- inner menu: contains the actual data -->
+                    <ul class="menu">
+                      <li>
+                        <a href="#">
+                          <i class="fa fa-users text-aqua"></i> 5 new members joined today
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <i class="fa fa-warning text-yellow"></i> Very long description here that may not fit into the page and may cause design problems
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <i class="fa fa-users text-red"></i> 5 new members joined
+                        </a>
+                      </li>
+
+                      <li>
+                        <a href="#">
+                          <i class="fa fa-shopping-cart text-green"></i> 25 sales made
+                        </a>
+                      </li>
+                      <li>
+                        <a href="#">
+                          <i class="fa fa-user text-red"></i> You changed your username
+                        </a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li class="footer"><a href="#">View all</a></li>
+                </ul>
+              </li>
+              <!-- Tasks: style can be found in dropdown.less -->
+              <li class="dropdown tasks-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <i class="fa fa-flag-o"></i>
+                  <span class="label label-danger">9</span>
+                </a>
+                <ul class="dropdown-menu">
+                  <li class="header">You have 9 tasks</li>
+                  <li>
+                    <!-- inner menu: contains the actual data -->
+                    <ul class="menu">
+                      <li><!-- Task item -->
+                        <a href="#">
+                          <h3>
+                            Design some buttons
+                            <small class="pull-right">20%</small>
+                          </h3>
+                          <div class="progress xs">
+                            <div class="progress-bar progress-bar-aqua" style="width: 20%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                              <span class="sr-only">20% Complete</span>
+                            </div>
+                          </div>
+                        </a>
+                      </li><!-- end task item -->
+                      <li><!-- Task item -->
+                        <a href="#">
+                          <h3>
+                            Create a nice theme
+                            <small class="pull-right">40%</small>
+                          </h3>
+                          <div class="progress xs">
+                            <div class="progress-bar progress-bar-green" style="width: 40%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                              <span class="sr-only">40% Complete</span>
+                            </div>
+                          </div>
+                        </a>
+                      </li><!-- end task item -->
+                      <li><!-- Task item -->
+                        <a href="#">
+                          <h3>
+                            Some task I need to do
+                            <small class="pull-right">60%</small>
+                          </h3>
+                          <div class="progress xs">
+                            <div class="progress-bar progress-bar-red" style="width: 60%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                              <span class="sr-only">60% Complete</span>
+                            </div>
+                          </div>
+                        </a>
+                      </li><!-- end task item -->
+                      <li><!-- Task item -->
+                        <a href="#">
+                          <h3>
+                            Make beautiful transitions
+                            <small class="pull-right">80%</small>
+                          </h3>
+                          <div class="progress xs">
+                            <div class="progress-bar progress-bar-yellow" style="width: 80%" role="progressbar" aria-valuenow="20" aria-valuemin="0" aria-valuemax="100">
+                              <span class="sr-only">80% Complete</span>
+                            </div>
+                          </div>
+                        </a>
+                      </li><!-- end task item -->
+                    </ul>
+                  </li>
+                  <li class="footer">
+                    <a href="#">View all tasks</a>
+                  </li>
+                </ul>
+              </li>
+              <!-- User Account: style can be found in dropdown.less -->
+              <li class="dropdown user user-menu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+                  <img src="dist/img/user2-160x160.jpg" class="user-image" alt="User Image"/>
+                  <span class="hidden-xs">Aput</span>
+                </a>
+                <ul class="dropdown-menu">
+                  <!-- User image -->
+                  <li class="user-header">
+                    <img src="dist/img/user2-160x160.jpg" class="img-circle" alt="User Image" />
+                    <p>
+                      Alexander Pierce - Web Developer
+                      <small>Member since Nov. 2012</small>
+                    </p>
+                  </li>
+                  <!-- Menu Body -->
+                  <li class="user-body">
+                    <div class="col-xs-4 text-center">
+                      <a href="#">Followers</a>
+                    </div>
+                    <div class="col-xs-4 text-center">
+                      <a href="#">Sales</a>
+                    </div>
+                    <div class="col-xs-4 text-center">
+                      <a href="#">Friends</a>
+                    </div>
+                  </li>
+                  <!-- Menu Footer-->
+                  <li class="user-footer">
+                    <div class="pull-left">
+                      <a href="#" class="btn btn-default btn-flat">Profile</a>
+                    </div>
+                    <div class="pull-right">
+                      <a href="#" class="btn btn-default btn-flat">Sign out</a>
+                    </div>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </div>
+        </nav>
+      </header>
+      <!-- Left side column. contains the logo and sidebar -->
+      <aside class="main-sidebar">
+        <!-- sidebar: style can be found in sidebar.less -->
+        <section class="sidebar">
+          <!-- sidebar menu: : style can be found in sidebar.less -->
+          <ul class="sidebar-menu">
+            <li class="header">MAIN NAVIGATION</li>
+            <li class="active treeview">
+              <a href="dashboard.php">
+                <i class="fa fa-fw fa-home"></i> <span>Dashboard</span> 
+              </a>
+            </li>
+
+            <li class="treeview">
+              <a href="#">
+                <i class="fa fa-fw fa-desktop"></i> <span>Host</span> <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                <li class="active"><a href="hostlist.php"><i class="fa fa-circle-o"></i> Hosts List</a></li>
+                <li class="active"><a href="hostdetails.php"><i class="fa fa-circle-o"></i> Latest Data</a></li>
+              </ul>
+            </li>
+
+            <li class="treeview">
+              <a href="#">
+                <i class="fa fa-fw fa-sitemap"></i> <span>Groups</span> <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                <li>
+                  <a href="windows.php"><i class="fa fa-circle-o"></i> Windows </a>
+                </li>
+                <li>
+                  <a href="#"><i class="fa fa-circle-o"></i> Linux </a>
+                </li>
+                <li>
+                  <a href="#"><i class="fa fa-circle-o"></i> Firewall </a>
+                </li>
+                <li>
+                  <a href="#"><i class="fa fa-circle-o"></i> UPS </a>
+                </li>
+                <li>
+                  <a href="#"><i class="fa fa-circle-o"></i> Switches </a>
+                </li>
+              </ul>
+            </li>
+
+            <li class="treeview">
+              <a href="#">
+                <i class="fa fa-folder-open"></i> <span>Application</span> <i class="fa fa-angle-left pull-right"></i>
+              </a>
+              <ul class="treeview-menu">
+                <li class="active"><a href="dashboard.php"><i class="fa fa-circle-o"></i> Dashboard</a></li>
+                <li>
+                  <a href="#"><i class="fa fa-circle-o"></i> Hosts <i class="fa fa-angle-left pull-right"></i></a>
+                  <ul class="treeview-menu">
+                    <li><a href="hostlist.php"><i class="fa fa-circle-o"></i> Hosts List </a></li>
+                    <li>
+                      <a href="#"><i class="fa fa-circle-o"></i> Overview <i class="fa fa-angle-left pull-right"></i></a>
+                      <ul class="treeview-menu">
+                        <li><a href="windows.php"><i class="fa fa-circle-o"></i> Windows Overview</a></li>
+                        <li><a href="#"><i class="fa fa-circle-o"></i> Report</a></li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="index2.html"><i class="fa fa-circle-o"></i> Dashboard v2</a></li>
+              </ul>
+            </li>
+            
+            
+        </section>
+        <!-- /.sidebar -->
+      </aside>
+
+      <!-- Right side column. Contains the navbar and content of the page -->
+      <div class="content-wrapper">
+        <!-- Content Header (Page header) -->
+        <section class="content-header">
+          <h1>
+            <?php
+            $params = array(
+            "output" => array("name"),
+            "hostids" => $hostid,
+            "selectGroups" => array("name"),
+            "selectInterfaces" => array("ip")
+            );
+
+            $result = $zbx->call('host.get',$params);
+            foreach ($result as $row) {
+            $hostname = $row["name"];
+
+              foreach ($row["groups"] as $group) {
+                $hostgroup = $group['name'];
+              }
+                foreach ($row["interfaces"] as $interface) {
+                  $hostip = $interface['ip'];
+                  break;
+                }
+            print "$hostname";
+            }
+            ?>
+            <small>Latest Data</small>
+          </h1>
+           <?php
+            print $hostip.', '.$hostgroup;
+            ?>
+          <ol class="breadcrumb">
+            <li><a href="#"><i class="fa fa-dashboard"></i> Home</a></li>
+            <li class="active">Dashboard</li>
+          </ol>
+          <br><br>
+          <!-- select -->
+          <div class="form-group">
+            <select class="form-control" name="selecthost" onchange="location = this.value;" style="display: inline-block; width: auto;">
+              <option><?php echo $hostname ?></option>
+              <?php
+              $params = array(
+              "output" => array("hostid","name")
+              );
+              $result = $zbx->call('host.get',$params);
+              foreach ($result as $row) {
+              $gethostid = $row["hostid"];
+              if ($row["name"] != $hostname) {
+                $gethostname = $row["name"];
+              }
+              else {
+                continue;
+              }
+              echo '<option value="hostdetails.php?hostid='.$gethostid.'">'.$gethostname.'</option>';
+              }
+              ?>
+              </select>
+          </div>
+        </section>
+       
+        <!-- Main content -->
+        <section class="content">
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="box">
+                <div class="box-header">
+                  <h3 class="box-title"><?php if(isset($_POST['submit'])){ echo $daterange = $timefrom1.' - '.$timetill1;}else{ echo $status; }?></h3>
+                  <div class="box-tools pull-right">
+                    <button class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip" title="Collapse"><i class="fa fa-minus"></i></button>
+                  </div>
+                </div>
+                <div class="box-body">
+                  <div class="container">
+                    <form action="hostdetails.php" method="post">
+                      <div class="col-md-3">
+                        <div class="btn-group">
+                          <button type="button" class="btn btn-success btn-flat">Action</button>
+                          <button type="button" class="btn btn-success btn-flat dropdown-toggle" data-toggle="dropdown">
+                            <span class="caret"></span>
+                            <span class="sr-only">Toggle Dropdown</span>
+                          </button>
+                          <ul class="dropdown-menu" role="menu">
+                            <li><a href="hostdetails.php?timefrom=<?php echo strtotime('today')-3600*6;?>&timetill=<?php echo time();?>">Today</a></li>
+                            <li><a href="hostdetails.php?timefrom=<?php echo time()-60*60;?>&timetill=<?php echo time();?>">Last 1 hour</a></li>
+                            <li><a href="hostdetails.php?timefrom=<?php echo time()-24*60*60;?>&timetill=<?php echo time();?>">Last 1 day</a></li>
+                            <li><a href="hostdetails.php?timefrom=<?php echo time()-24*2*60*60;?>&timetill=<?php echo time();?>">Last 2 days</a></li>
+                            <li><a href="hostdetails.php?timefrom=<?php echo time()-24*7*60*60;?>&timetill=<?php echo time();?>">Last 7 days</a></li>
+                            <li><a href="hostdetails.php?timefrom=<?php echo time()-24*30*60*60;?>&timetill=<?php echo time();?>">Last 30 days</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li class="divider"></li>
+                            <li><a href="#">Separated link</a></li>
+                          </ul>
+                        </div>
+                        <input type="text" class="form-control" value="<?php if(isset($_POST['submit'])){ echo "";}else{ echo $status; }?>" style="display: inline-block; width: 150px;" disabled>
+                     </div>
+                     <div class='col-md-3'>
+                        <div class="form-group">
+                           <div class='input-group date' id='datetimepicker6'>
+                              <input type='text' class="form-control" name="timefrom" value="<?php if (isset($_POST['timefrom'])) echo $_POST['timefrom']; ?>" placeholder="From:" />
+                              <span class="input-group-addon">
+                              <span class="glyphicon glyphicon-calendar"></span>
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+                     <div class='col-md-3'>
+                        <div class="form-group">
+                           <div class='input-group date' id='datetimepicker7'>
+                              <input type='text' class="form-control" name="timetill" value="<?php if (isset($_POST['timetill'])) echo $_POST['timetill']; ?>" placeholder="To:" />
+                              <span class="input-group-addon">
+                              <span class="glyphicon glyphicon-calendar"></span>
+                              </span>
+                           </div>
+                        </div>
+                     </div>
+                     <div class='col-md-3'>
+                       <input type="submit" name="submit" value="Apply" style="height: 35px;"></input>
+                     </div>
+                   </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-xs-12">
+              <div class="box">
+                <div class="box-header">
+                  <h3 class="box-title">Overview</h3>
+                </div><!-- /.box-header -->
+                <div class="box-body">
+                  <ul class="nav nav-tabs" id= "myTab">
+                    <li class="active"><a data-toggle="tab" href="#systeminfo">System Info</a></li>
+                    <li><a data-toggle="tab" href="#performance">Performance</a></li>
+                    <li><a data-toggle="tab" href="#capacity">Capacity</a></li>
+                    <li><a data-toggle="tab" href="#issues">Issues</a></li>
+                    <li><a data-toggle="tab" href="#report">Report</a></li>
+                  </ul>
+
+                  <div class="tab-content">
+                    <div id="systeminfo" class="tab-pane fade in active">
+                      <div class="row">
+                        <br>
+                          <div class="col-md-6">
+                            <div class="box box-primary">
+                                    <div class="box-header">
+                                      <h3 class="box-title">System Info</h3>
+                                    </div>
+                                    <div class="box-body">
+                                      <table class="table table-bordered table-striped">
+                                          <tr>
+                                            <th><?php print $hostname ?></th>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "System information")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $sysinfo = $row["lastvalue"];
+                                              print "<td>$sysinfo</td>";
+                                              }
+                                            }
+                                            ?>
+                                          </tr>
+                                    </table>
+                                    </div><!-- /.box-body -->
+                                  </div><!-- /.box -->
+                                </div>
+                                  <div class="col-md-6">
+                                    <div class="box box-primary">
+                                      <div class="box-header">
+                                        <h3 class="box-title">Status</h3>
+                                      </div>
+                                      <div class="box-body">
+                                        <table class="table table-bordered table-striped">
+                                          <tr>
+                                            <td>ICMP loss</td>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "ICMP loss")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $icmploss = intval($row["lastvalue"]);
+                                              print "<td>$icmploss %</td>";
+                                              }
+                                            }
+                                            ?>
+                                          </tr>
+                                          <tr>
+                                            <td>ICMP Ping</td>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "ICMP ping")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $icmpping = intval($row["lastvalue"]);
+                                              if ($icmpping >= 1) {
+                                                print "<td>Up($icmpping)</td>";
+                                              }
+                                              else {
+                                                print "<td>Down($icmpping)</td>";
+                                              }
+                                              }
+                                            } 
+                                            ?>
+                                          </tr>
+                                          <tr>
+                                            <td>ICMP Response Time</td>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "ICMP response")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $icmpResponse = $row["lastvalue"] * 1000;
+                                              print "<td>$icmpResponse ms</td>";
+                                              }
+                                            }
+                                            ?>
+                                          </tr>
+                                          <tr>
+                                            <td>Zabbix Agent Availability</td>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "synthesis agent availability")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $zbxAvl = round($row["lastvalue"], 2);
+                                              if ($zbxAvl >= 1) {
+                                                print "<td>Available($zbxAvl)</td>";
+                                              }
+                                              else {
+                                                print "<td>Not Available($zbxAvl)</td>";
+                                              }
+                                              }
+                                            }
+                                            ?>
+                                          </tr>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <div class="box box-primary" style="height: 300px;">
+                                      <div class="box-header">
+                                        <h3 class="box-title">Total CPU and Memory</h3>
+                                      </div>
+                                      <div class="box-body">
+                                        <table class="table table-bordered table-striped">
+                                          <tr>
+                                            <th>CPU Count</th>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "cpu count")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "<td>No data</td>";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $cpuCount = $row["lastvalue"];
+                                              print "<td>$cpuCount</td>";
+                                              }
+                                            }
+                                            ?>
+                                          </tr>
+                                          <tr>
+                                            <th>Total Memory</th>
+                                            <td>
+                                            <?php
+                                            $params = array(
+                                            "output" => array("itemid"),
+                                            "hostids" => $hostid,
+                                            "search" => array("name" => "total memory")//seach id contains specific word
+                                            );
+                                            //call api method
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $item) {
+                                                $itemid = $item["itemid"];
+                                            }
+
+                                            if (isset($itemid) == false) {
+                                              print "No data";
+                                            }
+                                            else {
+                                            $params = array(
+                                            "output" => array("lastvalue"),
+                                            "itemids" => $itemid
+                                            );
+
+                                            //call api history.get with params
+                                            $result = $zbx->call('item.get',$params);
+                                            foreach ($result as $row) {
+                                              $totalMem = $row["lastvalue"];
+                                              print substr($totalMem, 0, 1).' GB';
+                                              }
+                                            }
+                                            ?>
+                                            </td>
+                                          </tr>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <?php
+                                  $params = array(
+                                  "output" => array("itemid"),
+                                  "hostids" => $hostid,
+                                  "search" => array("name" => "uptime")//seach id contains specific word
+                                  );
+                                  //call api method
+                                  $result = $zbx->call('item.get',$params);
+                                  foreach ($result as $item) {
+                                      $itemid = $item["itemid"];
+                                  }
+
+                                  if ($diff >= 72000) {
+                                  $params = array(
+                                        "output" => array("clock", "value_max"),
+                                        "itemids" => $itemid,
+                                        "sortfield" => "clock",
+                                        "sortorder" => "DESC",
+                                        "time_from" => $timefrom,
+                                        "time_till" => $timetill
+                                        );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('trend.get',$params);
+                                  $systemup_data = '';
+                                  foreach ($result as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $systemup_data .= "{clock: ";
+                                        $systemup_data .= $row["clock"];
+                                        $systemup_data .= ", ";
+                                        $systemup_data .= "value: ";
+                                        $systemup_data .= $row["value_max"];
+                                        $systemup_data .= "},";
+                                    } 
+                                  }
+
+                                  else {
+                                  $params = array(
+                                          "output" => array("clock", "value"),
+                                          "itemids" => $itemid,
+                                          "sortfield" => "clock",
+                                          "sortorder" => "DESC",
+                                          "time_from" => $timefrom,
+                                          "time_till" => $timetill
+                                          );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('history.get',$params);
+                                  $systemup_data = '';
+                                  foreach (array_reverse($result) as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $systemup_data .= "{clock: ";
+                                        $systemup_data .= $row["clock"];
+                                        $systemup_data .= ", ";
+                                        $systemup_data .= "value: ";
+                                        $systemup_data .= $row["value"];
+                                        $systemup_data .= "},";
+                                    } 
+                                  }
+                                  ?>
+                                  <div class="col-md-6">
+                                    <div class="box box-primary">
+                                      <div class="box-header">
+                                        <h3 class="box-title">System Uptime</h3>
+                                      </div>
+                                      <div class="box-body">
+                                        <div id="sysuptime" style="width: auto;height: 300px;"></div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div class="col-md-6">
+                                    <div class="box box-primary">
+                                      <div class="box-header">
+                                        <h3 class="box-title">HDD</h3>
+                                      </div>
+                                      <div class="box-body">
+                                      </div>
+                                    </div>
+                                  </div>
+                            </div>
+                    </div>
+                    <div id="performance" class="tab-pane fade">
+                      <div class="box-header">
+                        <h3 class="box-title"></h3>
+                      </div><!-- /.box-header -->
+                      <div class="row">
+                          <div class="col-md-4">
+                            <?php
+                            $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "cpu percentage")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                            //perform trend.get if time range above 7 days
+                            if ($diff >= 72000) {
+                              $params = array(
+                                    "output" => array("clock", "value_max"),
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                              //call api history.get with params
+                              $result = $zbx->call('trend.get',$params);
+                              $chart_data = '';
+                              foreach ($result as $row) {
+                                    //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                    $row["clock"] = $row["clock"] * 1000;
+                                    $chart_data .= "{clock: ";
+                                    $chart_data .= $row["clock"];
+                                    $chart_data .= ", ";
+                                    $chart_data .= "value: ";
+                                    $chart_data .= $row["value_max"];
+                                    $chart_data .= "},";
+                                } 
+                            }
+
+                            else {
+                            $params = array(
+                                    "output" => array("clock", "value"),
+                                    "history" => 0,
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            $chart_data = '';
+                            foreach (array_reverse($result) as $row) {
+                                  //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                  $row["clock"] = $row["clock"] * 1000;
+                                  $chart_data .= "{clock: ";
+                                  $chart_data .= $row["clock"];
+                                  $chart_data .= ", ";
+                                  $chart_data .= "value: ";
+                                  $chart_data .= $row["value"];
+                                  $chart_data .= "},";
+                              } 
+                            }
+                           ?>  
+                            
+                            <!-- AREA CHART -->
+                                  <div class="box box-primary">
+                                    <div class="box-header">
+                                      <h3 class="box-title">CPU Utilization (%)</h3>
+                                    </div>
+                                    <div class="box-body chart-responsive">
+                                      <div id="cpuchart" style="width: auto;height: 500px;"></div>
+                                    </div><!-- /.box-body -->
+                                  </div><!-- /.box -->
+                                </div>
+
+                            <?php
+                            $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "number of processes")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                            //perform trend.get if time range above 7 days
+                            if ($diff >= 72000) {
+                              $params = array(
+                                    "output" => array("clock", "value_max"),
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                              //call api history.get with params
+                              $result = $zbx->call('trend.get',$params);
+                              $process_data = '';
+                              foreach ($result as $row) {
+                                    //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                    $row["clock"] = $row["clock"] * 1000;
+                                    $process_data .= "{clock: ";
+                                    $process_data .= $row["clock"];
+                                    $process_data .= ", ";
+                                    $process_data .= "value: ";
+                                    $process_data .= $row["value_max"];
+                                    $process_data .= "},";
+                                } 
+                            }
+
+                            else {
+                            $params = array(
+                                    "output" => array("clock", "value"),
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            $process_data = '';
+                            foreach (array_reverse($result) as $row) {
+                                  //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                  $row["clock"] = $row["clock"] * 1000;
+                                  $process_data .= "{clock: ";
+                                  $process_data .= $row["clock"];
+                                  $process_data .= ", ";
+                                  $process_data .= "value: ";
+                                  $process_data .= $row["value"];
+                                  $process_data .= "},";
+                              } 
+                            }
+                          ?>
+                          <div class="col-md-4">
+                            <!-- PROCESS CHART -->
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Number of processes run</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="processchart" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+                          </div>
+
+                            <?php
+                            $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "used memory")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                            //perform trend.get if time range above 7 days
+                            if ($diff >= 72000) {
+                              $params = array(
+                                    "output" => array("clock", "value_max"),
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                              //call api history.get with params
+                              $result = $zbx->call('trend.get',$params);
+                              $mem_data = '';
+                              foreach ($result as $row) {
+                                    //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                    $row["clock"] = $row["clock"] * 1000;
+                                    $mem_data .= "{clock: ";
+                                    $mem_data .= $row["clock"];
+                                    $mem_data .= ", ";
+                                    $mem_data .= "value: ";
+                                    $mem_data .= $row["value_max"];
+                                    $mem_data .= "},";
+                                } 
+                            }
+
+                            else {
+                            $params = array(
+                                    "output" => array("clock", "value"),
+                                    "history" => 0,
+                                    "itemids" => $itemid,
+                                    "sortfield" => "clock",
+                                    "sortorder" => "DESC",
+                                    "time_from" => $timefrom,
+                                    "time_till" => $timetill
+                                    );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            $mem_data = '';
+                            foreach (array_reverse($result) as $row) {
+                                  //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                  $row["clock"] = $row["clock"] * 1000;
+                                  $mem_data .= "{clock: ";
+                                  $mem_data .= $row["clock"];
+                                  $mem_data .= ", ";
+                                  $mem_data .= "value: ";
+                                  $mem_data .= $row["value"];
+                                  $mem_data .= "},";
+                              } 
+                            }
+                          ?>  
+
+                          
+                          <div class="col-md-4">
+                            <!-- MEMORY CHART -->
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Memory used (%)</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="memorychart" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+                          </div>
+
+                          <?php
+                          $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "File read")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+                            
+                          if ($diff >= 72000) {
+                          $params = array(
+                                "output" => array("clock", "value_max"),
+                                "itemids" => $itemid,
+                                "sortfield" => "clock",
+                                "sortorder" => "DESC",
+                                "time_from" => $timefrom,
+                                "time_till" => $timetill
+                                );
+
+                          //call api history.get with params
+                          $result = $zbx->call('trend.get',$params);
+                          $fileread_data = '';
+                          foreach ($result as $row) {
+                                //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                $row["clock"] = $row["clock"] * 1000;
+                                $fileread_data .= "{clock: ";
+                                $fileread_data .= $row["clock"];
+                                $fileread_data .= ", ";
+                                $fileread_data .= "value: ";
+                                $fileread_data .= $row["value_max"] / 1000;
+                                $fileread_data .= "},";
+                            } 
+                          }
+
+                          else {
+                          $params = array(
+                                  "output" => array("clock", "value"),
+                                  "itemids" => $itemid,
+                                  "history" => "0",
+                                  "sortfield" => "clock",
+                                  "sortorder" => "DESC",
+                                  "time_from" => $timefrom,
+                                  "time_till" => $timetill
+                                  );
+
+                          //call api history.get with params
+                          $result = $zbx->call('history.get',$params);
+                          $fileread_data = '';
+                          foreach (array_reverse($result) as $row) {
+                                //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                $row["clock"] = $row["clock"] * 1000;
+                                $fileread_data .= "{clock: ";
+                                $fileread_data .= $row["clock"];
+                                $fileread_data .= ", ";
+                                $fileread_data .= "value: ";
+                                $fileread_data .= $row["value"] / 1000;
+                                $fileread_data .= "},";
+                            } 
+                          } 
+                          ?>
+                          <div class="col-md-6">
+                            <!-- MEMORY CHART -->
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">File read bytes/s</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="fileread" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+                          </div>
+
+                          <?php
+                          $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "File write")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+                          if ($diff >= 72000) {
+                          $params = array(
+                                "output" => array("clock", "value_max"),
+                                "itemids" => $itemid,
+                                "sortfield" => "clock",
+                                "sortorder" => "DESC",
+                                "time_from" => $timefrom,
+                                "time_till" => $timetill
+                                );
+
+                          //call api history.get with params
+                          $result = $zbx->call('trend.get',$params);
+                          $filewrite_data = '';
+                          foreach ($result as $row) {
+                                //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                $row["clock"] = $row["clock"] * 1000;
+                                $filewrite_data .= "{clock: ";
+                                $filewrite_data .= $row["clock"];
+                                $filewrite_data .= ", ";
+                                $filewrite_data .= "value: ";
+                                $filewrite_data .= $row["value_max"] / 1000;
+                                $filewrite_data .= "},";
+                            } 
+                          }
+
+                          else {
+                          $params = array(
+                                  "output" => array("clock", "value"),
+                                  "itemids" => $itemid,
+                                  "history" => "0",
+                                  "sortfield" => "clock",
+                                  "sortorder" => "DESC",
+                                  "time_from" => $timefrom,
+                                  "time_till" => $timetill
+                                  );
+
+                          //call api history.get with params
+                          $result = $zbx->call('history.get',$params);
+                          $filewrite_data = '';
+                          foreach (array_reverse($result) as $row) {
+                                //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                $row["clock"] = $row["clock"] * 1000;
+                                $filewrite_data .= "{clock: ";
+                                $filewrite_data .= $row["clock"];
+                                $filewrite_data .= ", ";
+                                $filewrite_data .= "value: ";
+                                $filewrite_data .= $row["value"] / 1000;
+                                $filewrite_data .= "},";
+                            } 
+                          } 
+                          ?>
+                          <div class="col-md-6">
+                            <!-- MEMORY CHART -->
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">File write bytes/s</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="filewrite" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+                          </div>
+
+                          <!-- INCOMING TRAFFICS  -->
+                          <div class="col-xs-12">
+                             <!-- Purple tile -->
+                            <div class="box box-solid box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Incoming Traffics</h3>
+                              </div>
+                              <div class="box-body">
+
+                            <?php
+                            $params = array(
+                            "output" => array("itemid", "name"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Incoming network traffic")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            $count = 1;
+                            $intraffic = array();
+                            //if search result more than 1, only take one data
+                            if (count($result) > 1) {
+                               foreach ($result as $item) {
+
+                                $graphcount = "ingraph".$count;
+                                $itemid = $item["itemid"];
+                                $itemname = $item["name"];
+                                
+                                if ($diff >= 72000) {
+                                  $params = array(
+                                        "output" => array("clock", "value_max"),
+                                        "itemids" => $itemid,
+                                        "sortfield" => "clock",
+                                        "sortorder" => "DESC",
+                                        "time_from" => $timefrom,
+                                        "time_till" => $timetill
+                                        );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('trend.get',$params);
+                                  $data = '';
+                                  foreach ($result as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $data .= "{clock: ";
+                                        $data .= $row["clock"];
+                                        $data .= ", ";
+                                        $data .= "value: ";
+                                        $data .= $row["value_max"] / 1000;
+                                        $data .= "},";
+                                    } 
+                                  }
+
+                                  else {
+                                  $params = array(
+                                          "output" => array("clock", "value"),
+                                          "itemids" => $itemid,
+                                          "sortfield" => "clock",
+                                          "sortorder" => "DESC",
+                                          "time_from" => $timefrom,
+                                          "time_till" => $timetill
+                                          );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('history.get',$params);
+                                  $data = '';
+                                  foreach (array_reverse($result) as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $data .= "{clock: ";
+                                        $data .= $row["clock"];
+                                        $data .= ", ";
+                                        $data .= "value: ";
+                                        $data .= $row["value"] / 1000;
+                                        $data .= "},";
+                                    }   
+                                  } 
+                                  $intraffic[$count] = substr($data, 0, -1);
+
+                                  if ($count % 3 == 1) {
+                                              print "<div class='row'>";
+                                            }
+
+                                              print "<div class='col-md-4'>
+                                                        <div class='box box-primary'>
+                                                          <div class='box-header'>
+                                                            <h4 class='box title'>$itemname</h4>
+                                                          </div>
+                                                        <div class='box-body chart-responsive'>
+                                                      <div id=$graphcount style='width: auto;height: 300px;'></div>
+                                                    </div>
+                                                  </div>
+                                                </div>";
+                                            
+                                            if ($count % 3 == 0) {
+                                              print "</div>";
+                                            }
+
+
+                                            print "<script>
+                                            am4core.ready(function() {
+
+                                            // Themes begin
+                                            am4core.useTheme(am4themes_animated);
+                                            am4core.useTheme(am4themes_dark);
+                                            // Themes end
+
+                                            // Create chart instance
+                                            var chart = am4core.create('$graphcount', am4charts.XYChart);
+
+                                            // Add data
+                                            chart.data = generateChartData();
+                                            chart.background.fill = '#121212';
+                                            chart.background.opacity = 1.0;
+
+                                            //show in KBps
+                                            chart.numberFormatter.numberFormat = '#.00 KBps';
+
+
+                                            // Create axes
+                                            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+                                            dateAxis.renderer.minGridDistance = 20;
+                                            dateAxis.renderer.labels.template.rotation = 90;
+                                            dateAxis.renderer.labels.template.verticalCenter = 'middle';
+                                            dateAxis.renderer.labels.template.horizontalCenter = 'left';
+
+                                            var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+                                            // Create series
+                                            var series = chart.series.push(new am4charts.LineSeries());
+                                            series.dataFields.valueY = 'value';
+                                            series.dataFields.dateX = 'clock';
+                                            series.fill = am4core.color('#8228CE'); 
+                                            series.stroke = am4core.color('#8228CE');
+                                            series.strokeWidth = 2;
+                                            series.fillOpacity = 0.5;
+                                            series.minBulletDistance = 10;
+                                            series.tooltipText = '{valueY}';
+                                            series.tooltip.pointerOrientation = 'vertical';
+                                            series.tooltip.background.cornerRadius = 20;
+                                            series.tooltip.background.fillOpacity = 0.5;
+                                            series.tooltip.label.padding(12,12,12,12);
+                                            
+                                            
+
+                                            // Add scrollbar
+                                            chart.scrollbarX = new am4charts.XYChartScrollbar();
+                                            chart.scrollbarX.series.push(series);
+
+
+                                            // Add cursor
+                                            chart.cursor = new am4charts.XYCursor();
+                                            chart.cursor.xAxis = dateAxis;
+                                            chart.cursor.snapToSeries = series;
+
+                                            function generateChartData() {
+                                                var chartData = [$intraffic[$count]];
+                                                
+                                                return chartData;
+                                            }
+
+                                            }); // end am4core.ready()
+                                            </script>";
+                                 
+                                  $count++;
+                                } 
+                             }
+
+                            if ($count%3 != 1) {
+                                        echo "</div>";
+                                      }
+                          ?>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <!-- OUTGOING TRAFFICS  -->
+                          <div class="col-xs-12">
+                             <!-- Purple tile -->
+                            <div class="box box-solid box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Outgoing Traffics</h3>
+                              </div>
+                              <div class="box-body">
+                                
+                            <?php
+                            $params = array(
+                            "output" => array("itemid", "name"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Outgoing network traffic")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            $count = 1;
+                            $outtraffic = array();
+                            //if search result more than 1, only take one data
+                            if (count($result) > 1) {
+                               foreach ($result as $item) {
+
+                                $graphcount = "outgraph".$count;
+                                $itemid = $item["itemid"];
+                                $itemname = $item["name"];
+                                
+                                if ($diff >= 72000) {
+                                  $params = array(
+                                        "output" => array("clock", "value_max"),
+                                        "itemids" => $itemid,
+                                        "sortfield" => "clock",
+                                        "sortorder" => "DESC",
+                                        "time_from" => $timefrom,
+                                        "time_till" => $timetill
+                                        );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('trend.get',$params);
+                                  $data = '';
+                                  foreach ($result as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $data .= "{clock: ";
+                                        $data .= $row["clock"];
+                                        $data .= ", ";
+                                        $data .= "value: ";
+                                        $data .= $row["value_max"] / 1000;
+                                        $data .= "},";
+                                    } 
+                                  }
+
+                                  else {
+                                  $params = array(
+                                          "output" => array("clock", "value"),
+                                          "itemids" => $itemid,
+                                          "sortfield" => "clock",
+                                          "sortorder" => "DESC",
+                                          "time_from" => $timefrom,
+                                          "time_till" => $timetill
+                                          );
+
+                                  //call api history.get with params
+                                  $result = $zbx->call('history.get',$params);
+                                  $data = '';
+                                  foreach (array_reverse($result) as $row) {
+                                        //$row["clock"] = date(" H:i\ ", $row["clock"]);
+                                        $row["clock"] = $row["clock"] * 1000;
+                                        $data .= "{clock: ";
+                                        $data .= $row["clock"];
+                                        $data .= ", ";
+                                        $data .= "value: ";
+                                        $data .= $row["value"] / 1000;
+                                        $data .= "},";
+                                    }   
+                                  } 
+                                  $outtraffic[$count] = substr($data, 0, -1);
+
+                                  if ($count % 3 == 1) {
+                                              print "<div class='row'>";
+                                            }
+
+                                              print "<div class='col-md-4'>
+                                                        <div class='box box-primary'>
+                                                          <div class='box-header'>
+                                                            <h4 class='box title'>$itemname</h4>
+                                                          </div>
+                                                        <div class='box-body chart-responsive'>
+                                                      <div id=$graphcount style='width: auto;height: 300px;'></div>
+                                                    </div>
+                                                  </div>
+                                                </div>";
+                                            
+                                            if ($count % 3 == 0) {
+                                              print "</div>";
+                                            }
+
+
+                                            print "<script>
+                                            am4core.ready(function() {
+
+                                            // Themes begin
+                                            am4core.useTheme(am4themes_animated);
+                                            am4core.useTheme(am4themes_dark);
+                                            // Themes end
+
+                                            // Create chart instance
+                                            var chart = am4core.create('$graphcount', am4charts.XYChart);
+
+                                            // Add data
+                                            chart.data = generateChartData();
+                                            chart.background.fill = '#121212';
+                                            chart.background.opacity = 1.0;
+
+                                            //show in KBps
+                                            chart.numberFormatter.numberFormat = '#.00 KBps';
+
+
+                                            // Create axes
+                                            var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+                                            dateAxis.renderer.minGridDistance = 20;
+                                            dateAxis.renderer.labels.template.rotation = 90;
+                                            dateAxis.renderer.labels.template.verticalCenter = 'middle';
+                                            dateAxis.renderer.labels.template.horizontalCenter = 'left';
+
+                                            var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+                                            // Create series
+                                            var series = chart.series.push(new am4charts.LineSeries());
+                                            series.dataFields.valueY = 'value';
+                                            series.dataFields.dateX = 'clock';
+                                            series.fill = am4core.color('#8228CE'); 
+                                            series.stroke = am4core.color('#8228CE');
+                                            series.strokeWidth = 2;
+                                            series.fillOpacity = 0.5;
+                                            series.minBulletDistance = 10;
+                                            series.tooltipText = '{valueY}';
+                                            series.tooltip.pointerOrientation = 'vertical';
+                                            series.tooltip.background.cornerRadius = 20;
+                                            series.tooltip.background.fillOpacity = 0.5;
+                                            series.tooltip.label.padding(12,12,12,12);
+
+                                            // Add scrollbar
+                                            chart.scrollbarX = new am4charts.XYChartScrollbar();
+                                            chart.scrollbarX.series.push(series);
+
+
+                                            // Add cursor
+                                            chart.cursor = new am4charts.XYCursor();
+                                            chart.cursor.xAxis = dateAxis;
+                                            chart.cursor.snapToSeries = series;
+
+                                            function generateChartData() {
+                                                var chartData = [$outtraffic[$count]];
+                                                
+                                                return chartData;
+                                            }
+
+                                            }); // end am4core.ready()
+                                            </script>";
+                                 
+                                  $count++;
+                                } 
+                             }
+
+                            if ($count%3 != 1) {
+                                        echo "</div>";
+                                      }
+                          ?>
+                              </div>
+                            </div>
+                          </div>
+
+                          
+
+                        </div><!-- /.row -->
+                    </div>
+
+                    <div id="capacity" class="tab-pane fade">
+                      <div class="row">
+                        <br>
+                       <?php
+                          $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Used disk space on C")//seach id contains specific word
+                            );
+
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                          $params = array(
+                            "output" => array("clock", "value"),
+                            "itemids" => $itemid,
+                            "sortfield" => "clock",
+                            "sortorder" => "DESC",
+                            "limit" => 1
+                            );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            $cdisc_data = '';
+                            foreach ($result as $row) {
+                                $cdisc_data .= '{"category": ';
+                                $cdisc_data .= '"Used", ';
+                                $cdisc_data .= '"space": ';
+                                $cdisc_data .= $row["value"] / (1024*1024*1024);
+                                $cdisc_data .= "},";
+                              }
+
+                            $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Free disk space on C"),//seach id contains specific word
+                            "limit" => 1
+                            );
+
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+                            $params = array(
+                            "output" => array("clock", "value"),
+                            "itemids" => $itemid,
+                            "sortfield" => "clock",
+                            "sortorder" => "DESC",
+                            "limit" => 1
+                            );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            foreach ($result as $row) {
+                                $cdisc_data .= '{"category": ';
+                                $cdisc_data .= '"Free", ';
+                                $cdisc_data .= '"space": ';
+                                $cdisc_data .= $row["value"] / (1024*1024*1024);
+                                $cdisc_data .= "},";
+                              }
+
+                          ?>
+
+                          <!-- C DISC CHART -->
+                          <div class="col-md-6">
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Disk Space on C: (GB)</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="cdisc" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+
+                          </div><!-- /.col (RIGHT) -->
+
+                          <?php
+                          $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Used disk space on D")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                          $params = array(
+                            "output" => array("clock", "value"),
+                            "itemids" => $itemid,
+                            "sortfield" => "clock",
+                            "sortorder" => "DESC",
+                            "limit" => 1
+                            );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            $ddisc_data = '';
+                            foreach ($result as $row) {
+                                $ddisc_data .= '{"category": ';
+                                $ddisc_data .= '"Used", ';
+                                $ddisc_data .= '"space": ';
+                                $ddisc_data .= $row["value"] / (1024*1024*1024);
+                                $ddisc_data .= "},";
+                              }
+
+                            $params = array(
+                            "output" => array("itemid"),
+                            "hostids" => $hostid,
+                            "search" => array("name" => "Free disk space on D")//seach id contains specific word
+                            );
+                            //call api method
+                            $result = $zbx->call('item.get',$params);
+                            foreach ($result as $item) {
+                                $itemid = $item["itemid"];
+                            }
+
+
+                            $params = array(
+                            "output" => array("clock", "value"),
+                            "itemids" => $itemid,
+                            "sortfield" => "clock",
+                            "sortorder" => "DESC",
+                            "limit" => 1
+                            );
+
+                            //call api history.get with params
+                            $result = $zbx->call('history.get',$params);
+                            foreach ($result as $row) {
+                                $ddisc_data .= '{"category": ';
+                                $ddisc_data .= '"Free", ';
+                                $ddisc_data .= '"space": ';
+                                $ddisc_data .= $row["value"] / (1024*1024*1024);
+                                $ddisc_data .= "},";
+                              }
+                          ?>
+                          <div class="col-md-6">
+                            <!-- MEMORY CHART -->
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Disk Space on D: (GB)</h3>
+                              </div>
+                              <div class="box-body chart-responsive">
+                                <div id="ddisc" style="width: auto;height: 500px;"></div>
+                              </div><!-- /.box-body -->
+                            </div><!-- /.box -->
+                          </div>
+                      </div>
+                    </div>
+
+                    <?php
+                     //count severity = Info
+                    $params = array(
+                    "output" => array("severity"),
+                    "hostids" => array($hostid),
+                    "severities" => "1",
+                    "time_from" => $timefrom,
+                    "time_till" => $timetill,
+                    "countOutput" => true
+                    );
+                    //call api problem.get only to get eventid
+                    $result = $zbx->call('problem.get',$params);
+                    $problem_data = '';
+                                            
+                    $problem_data .= '{"y": ';
+                    $problem_data .= '"Info", ';
+                    $problem_data .= '"Status": ';
+                    $problem_data .= $result;
+                    $problem_data .= "},";
+
+                    //count severity = Warning
+                    $params = array(
+                    "output" => array("severity"),
+                    "hostids" => array($hostid),
+                    "severities" => "2",
+                    "time_from" => $timefrom,
+                    "time_till" => $timetill,
+                    "countOutput" => true
+                    );
+                    //call api problem.get only to get eventid
+                    $result = $zbx->call('problem.get',$params);
+                    $problem_data .= '{"y": ';
+                    $problem_data .= '"Warning", ';
+                    $problem_data .= '"Status": ';
+                    $problem_data .= $result;
+                    $problem_data .= "},";
+
+                    //count severity = Average
+                    $params = array(
+                    "output" => array("severity"),
+                    "hostids" => array($hostid),
+                    "severities" => "3",
+                    "time_from" => $timefrom,
+                    "time_till" => $timetill,
+                    "countOutput" => true
+                    );
+                    //call api problem.get only to get eventid
+                    $result = $zbx->call('problem.get',$params);
+                    $problem_data .= '{"y": ';
+                    $problem_data .= '"Average", ';
+                    $problem_data .= '"Status": ';
+                    $problem_data .= $result;
+                    $problem_data .= "},";
+
+                    //count severity = High
+                    $params = array(
+                    "output" => array("severity"),
+                    "hostids" => array($hostid),
+                    "severities" => "4",
+                    "time_from" => $timefrom,
+                    "time_till" => $timetill,
+                    "countOutput" => true
+                    );
+                    //call api problem.get only to get eventid
+                    $result = $zbx->call('problem.get',$params);
+                    $problem_data .= '{"y": ';
+                    $problem_data .= '"High", ';
+                    $problem_data .= '"Status": ';
+                    $problem_data .= $result;
+                    $problem_data .= "},";
+
+                    //count severity = Disaster
+                    $params = array(
+                    "output" => array("severity"),
+                    "hostids" => array($hostid),
+                    "severities" => "5",
+                    "time_from" => $timefrom,
+                    "time_till" => $timetill,
+                    "countOutput" => true
+                    );
+                    //call api problem.get only to get eventid
+                    $result = $zbx->call('problem.get',$params);
+                    $problem_data .= '{"y": ';
+                    $problem_data .= '"Disaster", ';
+                    $problem_data .= '"Status": ';
+                    $problem_data .= $result;
+                    $problem_data .= "},";
+
+                    ?>
+
+                    <div id="issues" class="tab-pane fade">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Severities</h3>
+                                  </div><!-- /.box-header -->
+                                    <div class="box-body chart-responsive">
+                                      <div id="problemsbar" style="width: auto;height: 500px;"></div>
+                                    </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                          <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Problems</h3>
+                                  </div><!-- /.box-header -->
+                                    <div class="box-body">
+                                    <table id="winproblems" class="table table-bordered table-striped">
+                                      <thead>
+                                        <tr>
+                                          <th>ID</th>
+                                          <th>Time</th>
+                                          <th>Problem</th>
+                                          <th>Severity</th>
+                                          <th>Acknow.</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <?php
+                                        $params = array(
+                                        "output" => array("severity", "acknowledged", "name", "clock"),
+                                        "hostids" => $hostid,
+                                        "time_from" => $timefrom,
+                                        "time_till" => $timetill,
+                                      );
+                                    //call api problem.get only to get eventid
+                                    $result = $zbx->call('problem.get',$params);
+                                    //count id
+                                    $id = 1;
+
+                                      foreach ($result as $v) {
+                                        $clock = $v["clock"];
+                                        $clock1 = date("Y-m-d\ H:i:s\ ", $clock);
+                                        print "<tr>
+                                              <td>$id</td>";
+                                        $id = $id + 1;
+                                        print "<td>$clock1</td>";
+
+                                        $name = $v['name'];
+                                        $severity = $v['severity'];
+                                        $acknowledged = $v['acknowledged'];
+
+                                        print "<td>$name</td>";
+
+                                        //severity
+                                        print "<td style='text-align: center; padding: 0;'>";
+                                        if ($severity == 1) {
+                                          print "<button class='btn bg-blue margin' style='margin: 0px;'>Info</button>";
+                                        }
+                                        else if ($severity == 2) {
+                                          print "<button class='btn bg-yellow margin' style='margin: 0px;'>Warning</button>";
+                                        }
+                                        else if ($severity == 3) {
+                                          print "<button class='btn bg-orange margin' style='margin: 0px;'>Average</button>";
+                                        }
+                                        else if ($severity == 4) {
+                                          print "<button class='btn bg-red margin' style='margin: 0px;'>High</button>";
+                                        }
+                                        else if ($severity == 5) {
+                                          print "<button class='btn bg-red margin' style='margin: 0px;'>Danger</button>";
+                                        }
+                                        else {
+                                          print "<button class='btn bg-white margin' style='margin: 0px;'>Not Classified</button>";
+                                        }
+                                        print "</td>";
+
+                                        //acknowledge
+                                        print "<td style='text-align: center; padding: 0;'>";
+                                        if ($acknowledged == 1) {
+                                          print "<button class='btn bg-white margin' style='margin: 0px;'>Yes</button>";
+                                        }
+                                        else {
+                                          print "<button class='btn bg-white margin' style='margin: 0px;'>No</button>";
+                                        }
+                                        print "</td>";
+                                  
+                                        }
+                                        
+                                        ?>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </div><!-- /.box -->
+                              </div>
+                          </div>
+                          <div class="col-xs-12">
+                                <!-- Primary box -->
+                                <div class="box box-solid box-primary">
+                                  <div class="box-header">
+                                    <h3 class="box-title" align="center">Application Log</h3>
+                                    <div class="box-tools pull-right">
+                                      <button class="btn btn-primary btn-sm" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                    </div>
+                                  </div>
+                                  <div class="box-body">
+                                    
+                                  </div><!-- /.box-body -->
+                                </div><!-- /.box -->
+                              </div><!-- /.col -->
+                              <div class="col-xs-12">
+
+                                <!-- Primary box -->
+                                <div class="box box-solid box-primary">
+                                  <div class="box-header">
+                                    <h3 class="box-title" align="center">System Event Log</h3>
+                                    <div class="box-tools pull-right">
+                                      <button class="btn btn-primary btn-sm" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                    </div>
+                                  </div>
+                                  <div class="box-body">
+                    
+                                  </div><!-- /.box-body -->
+                                </div><!-- /.box -->
+                              </div><!-- /.col -->
+                            
+
+
+                        
+             
+                        
+                  </div>
+                </div>
+                <div id="report" class="tab-pane fade">
+                      <div class="row">
+                        <br><br>
+                          <div class="col-xs-12">
+                            <div class="box box-primary">
+                              <div class="box-header">
+                                <h3 class="box-title">Report</h3>
+                                  </div><!-- /.box-header -->
+                                    <div class="box-body">
+                                      <script type="text/javascript">
+                                      // This example loads data from the HTML table below.
+                                      google.load("visualization", "1", {packages:["corechart", "charteditor"]});
+                                      $(function(){
+                                        var renderers = $.extend($.pivotUtilities.renderers,
+                                        $.pivotUtilities.gchart_renderers);
+                                        var derivers = $.pivotUtilities.derivers;
+
+                                          $("#output").pivotUI($("#input"),
+                                            {
+                                              renderers: renderers,
+                                              rows: ["Host", "Problem"], cols: ["Date"],
+                                              derivedAttributes: {
+                                              "Month": derivers.dateFormat("Date", "%m-%n")
+                                            }
+                                          });
+                                       });
+                                      </script>
+                                      <div id="output" style="margin: 50px;"></div>
+                                      <table id="input" style="display: none;">
+                                        <thead>
+                                          <tr>
+                                            <th>Date</th>
+                                            <th>Year</th>
+                                            <th>Month</th>
+                                            <th>Day</th>
+                                            <th>Hour</th>
+                                            <th>Minute</th>
+                                            <th>Second</th>
+                                            <th>Problem</th>
+                                            <th>Severity</th>
+                                            <th>Acknow.</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          <?php
+                                        $params = array(
+                                        "output" => array("severity", "acknowledged", "name", "clock"),
+                                        "hostids" => $hostid,
+                                        "time_from" => $timefrom,
+                                        "time_till" => $timetill
+                                        );
+                                        //call api problem.get only to get eventid
+                                        $result = $zbx->call('problem.get',$params);
+                                        
+                                          foreach ($result as $row) {
+                                            $hoursToAdd = 0;
+                                            $secondsToAdd = $hoursToAdd * (60 * 60);
+                                            $row["clock"] = $row["clock"] + $secondsToAdd;
+                                            $clock = date("Y-m-d\ H:i:s ", $row["clock"]);
+                                            $row["Year"] = date("Y", $row["clock"]);
+                                            $year = $row["Year"];
+                                            $row["Month"] = date("m", $row["clock"]);
+                                            $month = $row["Month"];
+                                            $row["Day"] = date("d", $row["clock"]);
+                                            $day = $row["Day"];
+                                            $row["Hour"] = date("H", $row["clock"]);
+                                            $hour = $row["Hour"];
+                                            $row["Minute"] = date("i", $row["clock"]);
+                                            $minute = $row["Minute"];
+                                            $row["Second"] = date("s", $row["clock"]);
+                                            $second = $row["Second"];
+
+                                            print "<tr>
+                                                  <td>$clock</td>
+                                                  <td>$year</td>
+                                                  <td>$month</td>
+                                                  <td>$day</td>
+                                                  <td>$hour</td>
+                                                  <td>$minute</td>
+                                                  <td>$second</td>";
+
+                                            //problem names
+                                            $name = $row['name'];
+
+                                            //severity classes
+                                            if ($row["severity"] == "1") {
+                                            $row["severity"] = "Info";
+                                            }
+                                            else if ($row["severity"] == "2") {
+                                              $row["severity"] = "Warning";
+                                            }
+                                            else if ($row["severity"] == "3") {
+                                              $row["severity"] = "Average";
+                                            }
+                                            else if ($row["severity"] == "4") {
+                                              $row["severity"] = "High";
+                                            }
+                                            else if ($row["severity"] == "5") {
+                                              $row["severity"] = "Disaster";
+                                            }
+                                            $severity = $row['severity'];
+
+                                            //acknowledge class
+                                            if ($row['acknowledged'] == "0") {
+                                              $row['acknowledged'] = "No";
+                                            }
+                                            else{
+                                              $row['acknowledged'] = "Yes";
+                                            }
+                                            $acknowledged = $row['acknowledged'];
+
+                                            print "<td>$name</td>
+                                                    <td>$severity</td>
+                                                    <td>$acknowledged</td>
+                                                    </tr>";
+                                          }
+                                        ?>
+                                        </tbody>
+                                      </table>
+                                      <button id="export">Export CSV</button>
+                                    </div>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+              </div>
+            </div>
+          </div>
+
+
+
+
+
+        </section><!-- /.content -->
+      </div><!-- /.content-wrapper -->
+      <footer class="main-footer">
+        <div class="pull-right hidden-xs">
+          <b>Version</b> 2.0
+        </div>
+        <strong>Copyright &copy; 2014-2015 <a href="http://almsaeedstudio.com">Almsaeed Studio</a>.</strong> All rights reserved.
+      </footer>
+    </div><!-- ./wrapper -->
+
+   
+    <!-- Bootstrap 3.3.2 JS -->
+    <script src="bootstrap/js/bootstrap.min.js" type="text/javascript"></script>
+    <!-- Morris.js charts -->
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="plugins/morris/morris.min.js" type="text/javascript"></script>
+
+    
+    <script src="https://cdn.jsdelivr.net/momentjs/2.14.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/js/bootstrap-datetimepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.17.37/css/bootstrap-datetimepicker.min.css">
+
+    <!-- SlimScroll -->
+    <script src="plugins/slimScroll/jquery.slimscroll.min.js" type="text/javascript"></script>
+    <!-- FastClick -->
+    <script src='plugins/fastclick/fastclick.min.js'></script>
+    <!-- AdminLTE App -->
+    <script src="dist/js/app.min.js" type="text/javascript"></script>
+    <!-- AdminLTE for demo purposes -->
+    <script src="dist/js/demo.js" type="text/javascript"></script>
+
+    <!-- Refresh on current tab -->
+    <script type="text/javascript">
+      $('#myTab a').click(function(e) {
+        e.preventDefault();
+        $(this).tab('show');
+      });
+
+      // store the currently selected tab in the hash value
+      $("ul.nav-tabs > li > a").on("shown.bs.tab", function(e) {
+        var id = $(e.target).attr("href").substr(1);
+        window.location.hash = id;
+      });
+
+      // on load of the page: switch to the currently selected tab
+      var hash = window.location.hash;
+      $('#myTab a[href="' + hash + '"]').tab('show');
+    </script>
+
+    <!-- CPU chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("cpuchart", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+    //show in %
+    chart.numberFormatter.numberFormat = "#.0 '%'";
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+    
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.0;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{dateX}: \n{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12)
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($chart_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+    <!-- Process chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("processchart", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.0;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{dateX}: \n{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12)
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($process_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+    <!-- Memory chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("memorychart", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+    //show in %
+    chart.numberFormatter.numberFormat = "#.0 '%'";
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.5;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{dateX}: \n{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12)
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($mem_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+      <!-- Problems Bar Graph -->
+      <script>
+      am4core.ready(function() {
+
+      // Themes begin
+      am4core.useTheme(am4themes_animated);
+      am4core.useTheme(am4themes_dark);
+      // Themes end
+
+      // Create chart instance
+      let chart = am4core.create("problemsbar", am4charts.XYChart);
+
+      // Add data
+      chart.data = [<?php print substr($problem_data, 0, -1); ?>];
+      chart.background.fill = '#121212';
+      chart.background.opacity = 1.0;
+
+
+      // Create axes
+
+      var categoryAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+      categoryAxis.dataFields.category = "y";
+      categoryAxis.renderer.grid.template.location = 0;
+      categoryAxis.renderer.minGridDistance = 60;
+
+
+      var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+      valueAxis.maxPrecision = 0;
+
+      // Create series
+      var series = chart.series.push(new am4charts.ColumnSeries());
+      series.dataFields.valueY = "Status";
+      series.dataFields.categoryX = "y";
+      series.name = "Status";
+      series.columns.template.width = am4core.percent(60);
+      series.columns.template.tooltipText = "{categoryX}: [bold]{valueY}[/]";
+      series.columns.template.fillOpacity = .8;
+
+      var columnTemplate = series.columns.template;
+      columnTemplate.strokeWidth = 2;
+      columnTemplate.strokeOpacity = 1;
+
+      }); // end am4core.ready()
+      </script>
+
+<!-- C Disc Donut Chart -->
+<script>
+am4core.ready(function() {
+
+// Themes begin
+am4core.useTheme(am4themes_animated);
+am4core.useTheme(am4themes_dark);
+// Themes end
+
+// Create chart instance
+var chart = am4core.create("cdisc", am4charts.PieChart);
+chart.background.fill = '#121212';
+chart.background.opacity = 1.0;
+
+//show in GB
+chart.numberFormatter.numberFormat = "#.00 'GB'";
+
+// Add and configure Series
+var pieSeries = chart.series.push(new am4charts.PieSeries());
+pieSeries.dataFields.value = "space";
+pieSeries.dataFields.category = "category";
+
+// Let's cut a hole in our Pie chart the size of 30% the radius
+chart.innerRadius = am4core.percent(30);
+
+// Put a thick white border around each Slice
+pieSeries.slices.template.stroke = am4core.color("#fff");
+pieSeries.slices.template.strokeWidth = 2;
+pieSeries.slices.template.strokeOpacity = 1;
+pieSeries.slices.template
+  // change the cursor on hover to make it apparent the object can be interacted with
+  .cursorOverStyle = [
+    {
+      "property": "cursor",
+      "value": "pointer"
+    }
+  ];
+
+pieSeries.alignLabels = true;
+pieSeries.labels.template.bent = false;
+pieSeries.labels.template.radius = 3;
+pieSeries.labels.template.padding(0,0,0,0);
+
+pieSeries.ticks.template.disabled = true;
+
+// Create a base filter effect (as if it's not there) for the hover to return to
+var shadow = pieSeries.slices.template.filters.push(new am4core.DropShadowFilter);
+shadow.opacity = 0;
+
+// Create hover state
+var hoverState = pieSeries.slices.template.states.getKey("hover"); // normally we have to create the hover state, in this case it already exists
+
+// Slightly shift the shadow and make it more prominent on hover
+var hoverShadow = hoverState.filters.push(new am4core.DropShadowFilter);
+hoverShadow.opacity = 0.7;
+hoverShadow.blur = 5;
+
+// Add a legend
+chart.legend = new am4charts.Legend();
+
+chart.data = [<?php print substr($cdisc_data, 0, -1) ?>];
+
+}); // end am4core.ready()
+</script>
+
+<!-- D Disc Donut Chart -->
+<script>
+am4core.ready(function() {
+
+// Themes begin
+am4core.useTheme(am4themes_animated);
+am4core.useTheme(am4themes_dark);
+// Themes end
+
+// Create chart instance
+var chart = am4core.create("ddisc", am4charts.PieChart);
+chart.background.fill = '#121212';
+chart.background.opacity = 1.0;
+
+//show in GB
+chart.numberFormatter.numberFormat = "#.00 'GB'";
+
+// Add and configure Series
+var pieSeries = chart.series.push(new am4charts.PieSeries());
+pieSeries.dataFields.value = "space";
+pieSeries.dataFields.category = "category";
+
+// Let's cut a hole in our Pie chart the size of 30% the radius
+chart.innerRadius = am4core.percent(30);
+
+// Put a thick white border around each Slice
+pieSeries.slices.template.stroke = am4core.color("#fff");
+pieSeries.slices.template.strokeWidth = 2;
+pieSeries.slices.template.strokeOpacity = 1;
+pieSeries.slices.template
+  // change the cursor on hover to make it apparent the object can be interacted with
+  .cursorOverStyle = [
+    {
+      "property": "cursor",
+      "value": "pointer"
+    }
+  ];
+
+pieSeries.alignLabels = true;
+pieSeries.labels.template.bent = false;
+pieSeries.labels.template.radius = 3;
+pieSeries.labels.template.padding(0,0,0,0);
+
+pieSeries.ticks.template.disabled = true;
+
+// Create a base filter effect (as if it's not there) for the hover to return to
+var shadow = pieSeries.slices.template.filters.push(new am4core.DropShadowFilter);
+shadow.opacity = 0;
+
+// Create hover state
+var hoverState = pieSeries.slices.template.states.getKey("hover"); // normally we have to create the hover state, in this case it already exists
+
+// Slightly shift the shadow and make it more prominent on hover
+var hoverShadow = hoverState.filters.push(new am4core.DropShadowFilter);
+hoverShadow.opacity = 0.7;
+hoverShadow.blur = 5;
+
+// Add a legend
+chart.legend = new am4charts.Legend();
+
+chart.data = [<?php print substr($ddisc_data, 0, -1) ?>];
+
+}); // end am4core.ready()
+</script>
+
+    <!-- System Uptime NOC AD chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("sysuptime", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+    var yAxis = chart.yAxes.push(new am4charts.DurationAxis());
+    yAxis.baseUnit = "second";
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+    
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.0;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{dateX}: \n{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12)
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($systemup_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+    <!-- File read chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("fileread", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+    //show in KBps
+    chart.numberFormatter.numberFormat = "#.00 'KBps'";
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.5;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12);
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($fileread_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+    <!-- File write chart -->
+    <script>
+    am4core.ready(function() {
+
+    // Themes begin
+    am4core.useTheme(am4themes_animated);
+    am4core.useTheme(am4themes_dark);
+    // Themes end
+
+    // Create chart instance
+    var chart = am4core.create("filewrite", am4charts.XYChart);
+
+    // Add data
+    chart.data = generateChartData();
+    chart.background.fill = '#121212';
+    chart.background.opacity = 1.0;
+
+    //show in KBps
+    chart.numberFormatter.numberFormat = "#.00 'KBps'";
+
+    // Create axes
+    var dateAxis = chart.xAxes.push(new am4charts.DateAxis());
+    dateAxis.renderer.minGridDistance = 20;
+    dateAxis.renderer.labels.template.rotation = 90;
+    dateAxis.renderer.labels.template.verticalCenter = "middle";
+    dateAxis.renderer.labels.template.horizontalCenter = "left";
+
+    var valueAxis = chart.yAxes.push(new am4charts.ValueAxis());
+
+    // Create series
+    var series = chart.series.push(new am4charts.LineSeries());
+    series.dataFields.valueY = "value";
+    series.dataFields.dateX = "clock";
+    series.strokeWidth = 2;
+    series.fillOpacity = 0.5;
+    series.minBulletDistance = 10;
+    series.tooltipText = "{valueY}";
+    series.tooltip.pointerOrientation = "vertical";
+    series.tooltip.background.cornerRadius = 20;
+    series.tooltip.background.fillOpacity = 0.5;
+    series.tooltip.label.padding(12,12,12,12);
+
+    // Add scrollbar
+    chart.scrollbarX = new am4charts.XYChartScrollbar();
+    chart.scrollbarX.series.push(series);
+
+
+    // Add cursor
+    chart.cursor = new am4charts.XYCursor();
+    chart.cursor.xAxis = dateAxis;
+    chart.cursor.snapToSeries = series;
+
+    function generateChartData() {
+        var chartData = [<?php echo substr($filewrite_data, 0, -1);?>];
+        
+        return chartData;
+    }
+
+    }); // end am4core.ready()
+    </script>
+
+    
+
+    <!-- page script -->
+    <script type="text/javascript">
+      $(document).ready(function() {
+      $('#winproblems').DataTable( {
+          "scrollY":        "500px",
+          "scrollCollapse": true,
+          "paging":         false
+      } );
+    } );
+    </script>
+
+    <script type="text/javascript">
+   $(function () {
+       $('#datetimepicker6').datetimepicker({
+                format: "DD-MM-YYYY hh:mm A",
+              
+            });
+       $('#datetimepicker7').datetimepicker({
+   useCurrent: false, //Important! See issue #1075
+   format: "DD-MM-YYYY hh:mm A",
+   });
+       $("#datetimepicker6").on("dp.change", function (e) {
+           $('#datetimepicker7').data("DateTimePicker").minDate(e.date);
+       });
+       $("#datetimepicker7").on("dp.change", function (e) {
+           $('#datetimepicker6').data("DateTimePicker").maxDate(e.date);
+       });
+   });
+</script>
+<script>
+  $('#export').on('click',function(e){
+    var date = Date.now();
+    let options = {
+      "filename": "pivot" + date + ".csv",
+    }
+    var date = Date.now();
+    $(".pvtTable").table2csv('download',options);
+  });
+
+</script>
+
+  </body>
+</html>
