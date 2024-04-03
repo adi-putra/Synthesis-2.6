@@ -1,10 +1,6 @@
 Synthesis
 ============
 
-Synthesis, born from a shared vision, emerged as a solution designed to empower organizations across diverse sectors. The primary objective was to elevate businesses by ensuring the seamless operation of their IT infrastructures. Through extensive development efforts, collaborative initiatives, and steadfast commitment, Synthesis stands today as an industry trailblazer, offering a monitoring solution that excels in robustness, scalability, and flexibility.
-
-In the present day, Synthesis is actively deployed across crucial sectors, including major Banking and Finance institutions, Manufacturing entities, Entertainment industry, Data Centers, and SMEs. Beyond being a monitoring tool, Synthesis plays a pivotal role in reducing downtime, promptly addressing IT issues, and streamlining monitoring routines for its customers.
-
-Our unwavering commitment to excellence propels our story forward. As we continue to evolve, Synthesis remains at the forefront of IT monitoring technology. Headquartered in Kuala Lumpur, our presence extends with offices in Penang and other states across Malaysia, ensuring a broader reach and a significant impact on the way organizations manage and optimize their IT operations.
+As the original architect behind Synthesis during my tenure with the company, I'm immensely proud of its journey from concept to industry-leading solution. While my role in its ongoing development has transitioned, my commitment to transparency and knowledge sharing remains unwavering. Thus, I've decided to archive the original version of Synthesis on my GitHub repository, acknowledging its foundational significance. This decision reflects not only my dedication to open collaboration but also the evolution and progress that Synthesis has undergone since my departure from the company. As Synthesis continues to thrive under the stewardship of my former colleagues, I look forward to seeing how it continues to shape the landscape of IT monitoring technology.
 
 https://www.synthesisdigital.online/
